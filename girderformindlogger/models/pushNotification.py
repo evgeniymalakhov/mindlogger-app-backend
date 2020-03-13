@@ -3,7 +3,7 @@ import datetime
 import six
 import time
 
-from .model_base import Model
+from girderformindlogger.models.model_base import Model
 
 
 class ProgressState(object):
@@ -63,7 +63,7 @@ class PushNotification(Model):
                 'notification_type': notification_type,
                 'head': head,
                 'content': content,
-                'sendTime': (sendTime + datetime.timedelta(hours = delta)).strftime('%Y/%m/%d %H:%M'),
+                'sendTime': (datetime.datetime.strptime(sendTime, '%Y/%m/%d %H:%M') + datetime.timedelta(hours = delta)).strftime('%Y/%m/%d %H:%M'),
                 'creator_id': creator_id,
                 'created': currentTime,
                 'updated': currentTime,

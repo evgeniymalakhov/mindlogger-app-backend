@@ -545,14 +545,14 @@ class Applet(Resource):
             )
         if 'events' in schedule:
             for event in schedule['events']:
-                if event['data']['useNotifications']:
+                if event['data'].get('useNotifications', None):
+                    sendTime = '09:00'
                     if 'data' in event and 'useNotifications' in event['data'] and event['data']['useNotifications']:
                         sendTime = event['data']['notifications'][0]['start']
-                    else:
-                        sendTime = '09:00'
-                    sendTime = (str(event['schedule']['year'][0]) + '/' + 
-                                ('0' + str(event['schedule']['month'][0] + 1))[-2:] + '/' + 
-                                ('0' + str(event['schedule']['dayOfMonth'][0]))[-2:] + ' ' + 
+
+                    sendTime = (str(event['schedule']['year'][0]) + '/' +
+                                ('0' + str(event['schedule']['month'][0] + 1))[-2:] + '/' +
+                                ('0' + str(event['schedule']['dayOfMonth'][0]))[-2:] + ' ' +
                                 sendTime)
                     existNotification = PushNotificationModel().findOne(query={'applet':applet['_id'],
                                                                                 'creator_id':thisUser['_id'],
@@ -560,8 +560,8 @@ class Applet(Resource):
                                                                                 'sendTime':str(sendTime)})
                     if not existNotification:
                         sendTime = datetime.strptime(sendTime, '%Y/%m/%d %H:%M')
-                        PushNotificationModel().createNotification( applet['_id'], 1, 
-                                                                    event['data']['title'], event['data']['description'], 
+                        PushNotificationModel().createNotification( applet['_id'], 1,
+                                                                    event['data']['title'], event['data']['description'],
                                                                     sendTime, thisUser['_id'])
 
         appletMeta = applet['meta'] if 'meta' in applet else {'applet': {}}

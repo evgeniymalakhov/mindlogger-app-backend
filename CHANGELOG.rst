@@ -8,8 +8,16 @@ Changes
 -------
 Unreleased
 ==========
+2019-03-12: v0.13.5
+fixed 500 error - fix an issue in pushNotification model which cause 500 error
 
-2019-02-14: v0.13.2
+2019-03-10: v0.13.4
+fixed issue 609 - Applet names should not be able to be duplicated
+
+2019-03-10: v0.13.3
+fixed issue 243 - insert api to update username
+
+2019-03-7: v0.13.2
 ^^^^^^^^^^^^^^^^^^
 * Temporarily fixed applet caching issue
 * Added timezone field in `/user/authentication` endpoint
