@@ -14,12 +14,12 @@ from girderformindlogger.exceptions import RestException
 from girderformindlogger.models.notification import Notification as NotificationModel
 from girderformindlogger.models.user import User as UserModel
 from girderformindlogger.models.profile import Profile as ProfileModel
-from girderformindlogger.models.pushNotification import PushNotification as PushNotificationModel, ProgressState
+from girderformindlogger.models.pushNotification import PushNotification as PushNotificationModel, \
+    ProgressState
 from girderformindlogger.models.setting import Setting
 from girderformindlogger.settings import SettingKey
 from girderformindlogger.utility import JsonEncoder
 from girderformindlogger.api import access
-
 
 # If no timeout param is passed to stream, we default to this value
 DEFAULT_STREAM_TIMEOUT = 300
@@ -52,21 +52,21 @@ class Notification(Resource):
     @access.token(cookie=True)
     @autoDescribeRoute(
         Description('Stream notifications for a given user via the SSE protocol.')
-        .notes('This uses long-polling to keep the connection open for '
-               'several minutes at a time (or longer) and should be requested '
-               'with an EventSource object or other SSE-capable client. '
-               '<p>Notifications are returned within a few seconds of when '
-               'they occur.  When no notification occurs for the timeout '
-               'duration, the stream is closed. '
-               '<p>This connection can stay open indefinitely long.')
-        .param('timeout', 'The duration without a notification before the stream is closed.',
-               dataType='integer', required=False, default=DEFAULT_STREAM_TIMEOUT)
-        .param('since', 'Filter out events before this time stamp.',
-               dataType='integer', required=False)
-        .produces('text/event-stream')
-        .errorResponse()
-        .errorResponse('You are not logged in.', 403)
-        .errorResponse('The notification stream is not enabled.', 503)
+            .notes('This uses long-polling to keep the connection open for '
+                   'several minutes at a time (or longer) and should be requested '
+                   'with an EventSource object or other SSE-capable client. '
+                   '<p>Notifications are returned within a few seconds of when '
+                   'they occur.  When no notification occurs for the timeout '
+                   'duration, the stream is closed. '
+                   '<p>This connection can stay open indefinitely long.')
+            .param('timeout', 'The duration without a notification before the stream is closed.',
+                   dataType='integer', required=False, default=DEFAULT_STREAM_TIMEOUT)
+            .param('since', 'Filter out events before this time stamp.',
+                   dataType='integer', required=False)
+            .produces('text/event-stream')
+            .errorResponse()
+            .errorResponse('You are not logged in.', 403)
+            .errorResponse('The notification stream is not enabled.', 503)
     )
     def stream(self, timeout, params):
         if not Setting().get(SettingKey.ENABLE_NOTIFICATION_STREAM):
@@ -96,18 +96,20 @@ class Notification(Resource):
                     break
 
                 time.sleep(wait)
+
         return streamGen
 
     @disableAuditLog
     @access.token(cookie=True)
     @autoDescribeRoute(
         Description('List notification events')
-        .notes('This endpoint can be used for manual long-polling when '
-               'SSE support is disabled or otherwise unavailable. The events are always '
-               'returned in chronological order.')
-        .param('since', 'Filter out events before this date.', required=False, dataType='dateTime')
-        .errorResponse()
-        .errorResponse('You are not logged in.', 403)
+            .notes('This endpoint can be used for manual long-polling when '
+                   'SSE support is disabled or otherwise unavailable. The events are always '
+                   'returned in chronological order.')
+            .param('since', 'Filter out events before this date.', required=False,
+                   dataType='dateTime')
+            .errorResponse()
+            .errorResponse('You are not logged in.', 403)
     )
     def listNotifications(self, since):
         user, token = self.getCurrentUser(returnToken=True)
@@ -118,25 +120,32 @@ class Notification(Resource):
     @access.public
     @autoDescribeRoute(
         Description('Send push notifications')
-        .errorResponse()
-        .errorResponse('You are not logged in.', 403)
+            .errorResponse()
+            .errorResponse('You are not logged in.', 403)
     )
     def sendPushNotifications(self):
         success = 0
         error = 0
         now = datetime.utcnow().strftime('%Y/%m/%d %H:%M')
-        notifications = PushNotificationModel().find(query={'sendTime':{ "$lt": now }, 'progress':ProgressState.ACTIVE})
+        notifications = PushNotificationModel().find(
+            query={
+                'sendTime': {"$lt": now},
+                'progress': ProgressState.ACTIVE
+            }
+        )
+
         for notification in notifications:
             users = [
-                    UserModel().findOne({
-                        '_id':p['userId']
-                    }) for p in list(
-                        ProfileModel().find(
-                            query={'appletId': notification['applet'], 'userId':{'$exists':True}}
-                        )
+                UserModel().findOne({
+                    '_id': p['userId']
+                }) for p in list(
+                    ProfileModel().find(
+                        query={'appletId': notification['applet'], 'userId': {'$exists': True}}
                     )
+                )
             ]
-            deviceIds = [ user['deviceId'] for user in users if ('deviceId' in user) and (user.get('timezone', 0) == notification.get('timezone', 0))]
+            deviceIds = [user['deviceId'] for user in users if ('deviceId' in user) and (
+                    user.get('timezone', 0) == notification.get('timezone', 0))]
             proxy_dict = {
             }
             test_api_key = 'AAAAJOyOEz4:APA91bFudM5Cc1Qynqy7QGxDBa-2zrttoRw6ZdvE9PQbfIuAB9SFvPje7DcFMmPuX1IizR1NAa7eHC3qXmE6nmOpgQxXbZ0sNO_n1NITc1sE5NH3d8W9ld-cfN7sXNr6IAOuodtEwQy-'
@@ -144,9 +153,9 @@ class Notification(Resource):
             registration_ids = deviceIds
             message_title = notification['head']
             message_body = notification['content']
-            result = push_service.notify_multiple_devices(registration_ids=registration_ids, 
-                                                message_title=message_title, 
-                                                message_body=message_body)
+            result = push_service.notify_multiple_devices(registration_ids=registration_ids,
+                                                          message_title=message_title,
+                                                          message_body=message_body)
             notification['attempts'] += 1
             notification['progress'] = ProgressState.EMPTY
             if result['failure']:
@@ -160,5 +169,4 @@ class Notification(Resource):
 
             PushNotificationModel().save(notification, validate=False)
 
-
-        return {'successed':success, 'errors':error}
+        return {'successed': success, 'errors': error}

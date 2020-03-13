@@ -34,7 +34,7 @@ class PushNotification(Model):
 
     def initialize(self):
         self.name = 'pushNotification'
-        self.ensureIndices(('assetId', 'notification_type', 'head', 'content', 
+        self.ensureIndices(('assetId', 'notification_type', 'head', 'content',
                             'sendTime', 'creator_id', 'created', 'updated', 'progress', 'timezone', 'attempts'))
 
     def validate(self, doc):

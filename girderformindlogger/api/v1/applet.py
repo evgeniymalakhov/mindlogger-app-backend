@@ -40,6 +40,7 @@ from girderformindlogger.models.protocol import Protocol as ProtocolModel
 from girderformindlogger.models.roles import getCanonicalUser, getUserCipher
 from girderformindlogger.models.user import User as UserModel
 from girderformindlogger.models.pushNotification import PushNotification as PushNotificationModel
+from girderformindlogger.models.notification import Notification as NotificationModel
 from girderformindlogger.utility import config, jsonld_expander
 from pyld import jsonld
 
@@ -546,23 +547,26 @@ class Applet(Resource):
         if 'events' in schedule:
             for event in schedule['events']:
                 if event['data'].get('useNotifications', None):
-                    sendTime = '09:00'
-                    if 'data' in event and 'useNotifications' in event['data'] and event['data']['useNotifications']:
-                        sendTime = event['data']['notifications'][0]['start']
+                    send_time = '09:00'
+                    if 'data' in event \
+                        and 'useNotifications' in event['data'] \
+                        and event['data']['useNotifications']\
+                        and event['data']['notifications'][0]['start']:
+                        send_time = event['data']['notifications'][0]['start']
 
-                    sendTime = (str(event['schedule']['year'][0]) + '/' +
+                    send_time = (str(event['schedule']['year'][0]) + '/' +
                                 ('0' + str(event['schedule']['month'][0] + 1))[-2:] + '/' +
                                 ('0' + str(event['schedule']['dayOfMonth'][0]))[-2:] + ' ' +
-                                sendTime)
+                                send_time)
                     existNotification = PushNotificationModel().findOne(query={'applet':applet['_id'],
                                                                                 'creator_id':thisUser['_id'],
                                                                                 'timezone':0,
-                                                                                'sendTime':str(sendTime)})
+                                                                                'sendTime':str(send_time)})
                     if not existNotification:
-                        sendTime = datetime.strptime(sendTime, '%Y/%m/%d %H:%M')
+                        send_time = datetime.strptime(send_time, '%Y/%m/%d %H:%M')
                         PushNotificationModel().createNotification( applet['_id'], 1,
                                                                     event['data']['title'], event['data']['description'],
-                                                                    sendTime, thisUser['_id'])
+                                                                    send_time, thisUser['_id'])
 
         appletMeta = applet['meta'] if 'meta' in applet else {'applet': {}}
         if 'applet' not in appletMeta:
